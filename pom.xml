@@ -77,7 +77,7 @@
         <dependency>
             <groupId>io.github.binance</groupId>
             <artifactId>binance-futures-connector-java</artifactId>
-            <version>3.0.4</version>
+            <version>h3.0.4</version>
         </dependency>
 
         <dependency>

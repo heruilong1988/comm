@@ -11,6 +11,8 @@ import java.util.Date;
 @Getter
 @Setter
 @Builder(access = AccessLevel.PUBLIC)
+@NoArgsConstructor
+@AllArgsConstructor
 public class Order
 {
 	private Long id;

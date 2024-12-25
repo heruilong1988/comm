@@ -1,5 +1,9 @@
 package com.hrl.trade.common.domain.symbol;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import org.decimal4j.util.DoubleRounder;
 
 import java.math.BigDecimal;
@@ -8,6 +12,10 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 
+@Getter
+@Setter
+@EqualsAndHashCode(of = {"pair"})
+@ToString(of = {"pair"})
 public class Symbol
 {
 	private String pair;

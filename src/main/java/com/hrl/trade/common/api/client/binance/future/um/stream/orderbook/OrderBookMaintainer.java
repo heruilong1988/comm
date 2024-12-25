@@ -6,10 +6,12 @@ import com.hrl.trade.common.api.client.HClient;
 import com.hrl.trade.common.api.client.binance.future.um.stream.StreamBinanceUmFutureDiffDepthEvent;
 import com.hrl.trade.common.domain.depth.Depth;
 import com.hrl.trade.common.domain.orderbook.OrderBook;
+import com.hrl.trade.common.domain.symbol.Symbol;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.LocalDateTime;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
@@ -37,9 +39,10 @@ public class OrderBookMaintainer {
 
     //public  UMFuturesClientImpl restBinanceUmFutureClient;
 
-    public OrderBookMaintainer(HClient restBinanceUmFutureClient, Platforms platforms) {
+    public OrderBookMaintainer(HClient restBinanceUmFutureClient, Platforms platforms, Symbol symbol) {
         this.restBinanceUmFutureClient = restBinanceUmFutureClient;
         this.platformName = platforms.name();
+        this.orderBookAtomicReference = new AtomicReference<>(new OrderBook(symbol.getPricePrecision(), platforms.name(), symbol.getPair()));
     }
 
     /**
@@ -57,8 +60,8 @@ public class OrderBookMaintainer {
         @Override
         public void onReceive(String data) {
 
-            //log.debug("onmsg,timestamp:{},thread:{}", LocalDateTime.now(),Thread.currentThread().getId());
-            //orderBookAtomicReference.get().simplePrint();
+            log.info("onmsg,timestamp:{},thread:{}", LocalDateTime.now(),Thread.currentThread().getId());
+            orderBookAtomicReference.get().simplePrint();
 
 
             StreamBinanceUmFutureDiffDepthEvent streamBinanceUmFutureDiffDepthEvent = StreamBinanceUmFutureDiffDepthEvent.fromJson(data);

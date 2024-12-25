@@ -4,7 +4,9 @@ import com.hrl.trade.common.api.client.binance.spot.http.HBinanceSpotRestClient;
 import com.hrl.trade.common.api.client.HClient;
 import com.hrl.trade.common.api.client.Platforms;
 import com.hrl.trade.common.api.client.binance.spot.constants.BinanceSpotPrivateConfig;
+import com.hrl.trade.common.api.client.binance.spot.proxy.Utils;
 import com.hrl.trade.common.api.client.binance.spot.stream.HBinanceSpotStreamClient;
+import com.hrl.trade.common.api.proxy.MyProxyAuth;
 import com.hrl.trade.common.domain.depth.Depth;
 import com.hrl.trade.common.domain.order.Order;
 import com.hrl.trade.common.domain.orderbook.OrderBook;
@@ -63,5 +65,11 @@ public class HBinanceSpotClient implements HClient {
     @Override
     public String getPlatform() {
         return Platforms.BINANCE_SPOT.name();
+    }
+
+    @Override
+    public void setProxy(MyProxyAuth myProxyAuth) {
+        hBinanceSpotRestClient.setProxy(Utils.fromMyProxy(myProxyAuth));
+
     }
 }

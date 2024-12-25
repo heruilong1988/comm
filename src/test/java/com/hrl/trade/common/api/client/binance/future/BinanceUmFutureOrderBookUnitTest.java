@@ -1,10 +1,10 @@
 package com.hrl.trade.common.api.client.binance.future;
 
-import com.hrl.trade.config.PrivateConfig;
-import com.hrl.trade.model.OrderBook;
-import com.hrl.trade.model.order.OrderUpdateEvent;
-import com.hrl.trade.model.order.OrderUpdateEventListener;
-import com.hrl.trade.platform.binance.client.platform.BinanceUsdtBaseFuturePlatform;
+import com.hrl.trade.common.api.client.binance.future.um.HBinanceUmFutureClient;
+import com.hrl.trade.common.domain.orderbook.OrderBook;
+import com.hrl.trade.common.domain.orderupdate.OrderUpdateEvent;
+import com.hrl.trade.common.domain.orderupdate.OrderUpdateEventListener;
+import com.hrl.trade.common.domain.symbol.Symbol;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -17,15 +17,19 @@ public class BinanceUmFutureOrderBookUnitTest {
         System.setProperty("https.proxyHost","localhost");
         System.setProperty("https.proxyPort","7890");
 
-        BinanceUsdtBaseFuturePlatform binanceSpotPlatform = new BinanceUsdtBaseFuturePlatform(PrivateConfig.apiKey,
-                PrivateConfig.secretKey, new OrderUpdateEventListener() {
+
+        OrderUpdateEventListener orderUpdateEvent = new OrderUpdateEventListener() {
             @Override
             public void listen(OrderUpdateEvent orderUpdateEvent) {
 
             }
-        });
+        };
+        HBinanceUmFutureClient hBinanceUmFutureClient = new HBinanceUmFutureClient(null);
 
-        AtomicReference<OrderBook> bookRef =  binanceSpotPlatform.initOrderBook("btcusdt");
+        Symbol symbol = new Symbol();
+        symbol.setPair("BTCUSDT");
+
+       AtomicReference<OrderBook> bookRef = hBinanceUmFutureClient.getOrderBook(symbol);
 
         while (true) {
 

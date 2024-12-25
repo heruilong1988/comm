@@ -9,6 +9,7 @@ import com.hrl.trade.common.api.client.binance.future.um.stream.orderbook.OrderB
 import com.hrl.trade.common.domain.orderbook.OrderBook;
 import com.hrl.trade.common.domain.orderupdate.OrderUpdateEvent;
 import com.hrl.trade.common.domain.orderupdate.OrderUpdateEventListener;
+import com.hrl.trade.common.domain.symbol.Symbol;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -29,9 +30,9 @@ public class HBinanceFutureStreamClient {
     public OrderUpdateEventListener orderUpdateEventListener;
     public String platform;
 
-    public List<String> diffDepthStreamSymbols = new ArrayList<>();
+    public List<Symbol> diffDepthStreamSymbols = new ArrayList<>();
 
-    public Map<String, OrderBookMaintainer> symbol2OrderBookMaintainerMap = new HashMap<>();
+    public Map<Symbol, OrderBookMaintainer> symbol2OrderBookMaintainerMap = new HashMap<>();
 
     public int diffDepthSpeed = 100;
 
@@ -69,9 +70,17 @@ public class HBinanceFutureStreamClient {
                 30, 30, TimeUnit.MINUTES);*/
 
         userDataKeyScheduledExecutor.scheduleAtFixedRate(this::extendUserDateListenKey,
-                30, 30, TimeUnit.MINUTES);
+                0, 30, TimeUnit.MINUTES);
 
-        return umWebsocketClient.listenUserStream(this.userDataListenKey,onOpenCallbackUserDataStream,userDataStreamCallback,onClosedCallbackUserDataStream,onFailureCallbackUserDataStream);
+        log.info("begin userDataKeyScheduledExecutor");
+
+
+        int result = umWebsocketClient.listenUserStream(this.userDataListenKey,onOpenCallbackUserDataStream,userDataStreamCallback,onClosedCallbackUserDataStream,onFailureCallbackUserDataStream);
+
+        log.info("listenUserStream.result:{}", result);
+
+        return result;
+
     }
 
 
@@ -81,6 +90,9 @@ public class HBinanceFutureStreamClient {
 
     public void extendUserDateListenKey(){
         String userDataListenKeyFromServer = this.umFuturesClient.userData().createListenKey();
+
+        log.info("userDataListenKey create.platform:{},userDataListenKeyFromServer:{}",platform, userDataListenKeyFromServer);
+
 
         if(this.userDataListenKey != null) {
             if(!this.userDataListenKey.equals(userDataListenKeyFromServer)){
@@ -132,35 +144,42 @@ public class HBinanceFutureStreamClient {
 
         if(this.umWebsocketClient != null) {
             this.umWebsocketClient.closeAllConnections();
+            log.info("HBinanceFutureStreamClient.umWebsocketClient closeAllConnections");
         }
 
         this.umWebsocketClient = new UMWebsocketClientImpl();
+        log.info("HBinanceFutureStreamClient new UMWebsocketClientImpl");
 
         if(webSocketReconnectScheduled != null) {
             webSocketReconnectScheduled.shutdown();
 
+            log.info("webSocketReconnectScheduled shutdown");
+
+
             webSocketReconnectScheduled = Executors.newSingleThreadScheduledExecutor();
             webSocketReconnectScheduled.scheduleAtFixedRate(()->reinit(),
                     12, 12, TimeUnit.HOURS);
+
+            log.info("webSocketReconnectScheduled executed.");
+
         }
 
 
-        if(this.userDataStreamCallback != null) {
+        if(this.orderUpdateEventListener != null) {
             // this.createUserDateListenKey();
-            this.initUserDataStream();
+            int result = this.initUserDataStream();
         }else {
             log.info("userDataStreamCallback is null");
         }
 
-
         reinitDiffDepthStream();
-
 
     }
 
 
     public void reinitDiffDepthStream(){
         symbol2OrderBookMaintainerMap.clear();
+        log.info("symbol2OrderBookMaintainerMap clear");
         //监听depth
         this.diffDepthStreamSymbols.stream().forEach(symbol ->{
             {
@@ -169,20 +188,21 @@ public class HBinanceFutureStreamClient {
         });
     }
 
-    public void reinitDiffDepthStream(String symbol){
-        OrderBookMaintainer orderBookMaintainer = new OrderBookMaintainer(this.hClient, Platforms.BINANCE_UM_FUTURE);
+    public void reinitDiffDepthStream(Symbol symbol){
+        OrderBookMaintainer orderBookMaintainer = new OrderBookMaintainer(this.hClient, Platforms.BINANCE_UM_FUTURE, symbol);
         symbol2OrderBookMaintainerMap.put(symbol, orderBookMaintainer);
-        this.umWebsocketClient.diffDepthStream(symbol, diffDepthSpeed, onOpenCallbackDiffDepthStream,
+        this.umWebsocketClient.diffDepthStream(symbol.getPair(), diffDepthSpeed, onOpenCallbackDiffDepthStream,
                 orderBookMaintainer.getOnDiffDepthEventMessageCallback(),
                 onClosedCallbackDiffDepthStream,
                 onFailureCallbackDiffDepthStream);
+        log.info("listen on diffDepthStream.symbol:{}", symbol);
     }
 
     public void close(){
         this.umWebsocketClient.closeAllConnections();
     }
 
-    public AtomicReference<OrderBook> getOrderBook(String symbol) {
+    public AtomicReference<OrderBook> getOrderBook(Symbol symbol) {
 
         if(symbol2OrderBookMaintainerMap.containsKey(symbol)) {
             return this.symbol2OrderBookMaintainerMap.get(symbol).getOrderBookAtomicReference();

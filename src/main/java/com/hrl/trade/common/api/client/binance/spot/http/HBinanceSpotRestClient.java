@@ -3,13 +3,16 @@ package com.hrl.trade.common.api.client.binance.spot.http;
 import com.binance.connector.client.impl.SpotClientImpl;
 import com.binance.connector.client.impl.spot.Market;
 import com.binance.connector.client.impl.spot.Trade;
+import com.binance.connector.client.utils.ProxyAuth;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hrl.trade.common.api.client.binance.future.proxy.Utils;
 import com.hrl.trade.common.api.client.binance.spot.constants.ConstantKey;
 import com.hrl.trade.common.api.client.binance.spot.rsp.CancelOrderRsp;
 import com.hrl.trade.common.api.client.binance.spot.rsp.DepthRsp;
 import com.hrl.trade.common.api.client.binance.spot.rsp.QueryOrderRsp;
+import com.hrl.trade.common.api.proxy.MyProxyAuth;
 import com.hrl.trade.common.domain.depth.Depth;
 import com.hrl.trade.common.domain.order.Order;
 import com.hrl.trade.common.json.Serialization;
@@ -30,18 +33,19 @@ public class HBinanceSpotRestClient {
     public Market market;
 
     public HBinanceSpotRestClient(String apiKey, String secretKey) {
-        this.spotClient = new SpotClientImpl(apiKey,secretKey);
+        this.spotClient = new SpotClientImpl(apiKey, secretKey);
         this.trade = spotClient.createTrade();
         this.market = spotClient.createMarket();
     }
 
     public HBinanceSpotRestClient(String apiKey, String secretKey, String baseUrl) {
-        this.spotClient =new  SpotClientImpl(apiKey, secretKey, baseUrl);
+        this.spotClient = new SpotClientImpl(apiKey, secretKey, baseUrl);
         this.trade = spotClient.createTrade();
         this.market = spotClient.createMarket();
 
 
     }
+
     public Order newOrder(Order order) {
 
         LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
@@ -52,11 +56,11 @@ public class HBinanceSpotRestClient {
         parameters.put("quantity", order.getOrigQty().doubleValue());
         parameters.put("price", order.getPrice().doubleValue());
 
-        if(order.getTimeInForce() != null) {
+        if (order.getTimeInForce() != null) {
             parameters.put("timeInForce", order.getTimeInForce());
         }
 
-        String  rspOrderStr = trade.newOrder(parameters);
+        String rspOrderStr = trade.newOrder(parameters);
 
         ObjectMapper objectMapper = Serialization.serializationInstance.getObjectMapper();
         Order rspOrder = null;
@@ -77,11 +81,11 @@ public class HBinanceSpotRestClient {
         parameters.put("quantity", order.getOrigQty().doubleValue());
         parameters.put("price", order.getPrice().doubleValue());
 
-        if(order.getTimeInForce() != null) {
+        if (order.getTimeInForce() != null) {
             parameters.put("timeInForce", order.getTimeInForce());
         }
 
-        String  rspOrderStr = trade.testNewOrder(parameters);
+        String rspOrderStr = trade.testNewOrder(parameters);
 
         ObjectMapper objectMapper = Serialization.serializationInstance.getObjectMapper();
         Order rspOrder = null;
@@ -116,7 +120,8 @@ public class HBinanceSpotRestClient {
         ObjectMapper objectMapper = Serialization.serializationInstance.getObjectMapper();
         List<Order> rspOrderList = null;
         try {
-            rspOrderList = objectMapper.readValue(orderStr, new TypeReference<List<Order>>() {});
+            rspOrderList = objectMapper.readValue(orderStr, new TypeReference<List<Order>>() {
+            });
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -141,11 +146,11 @@ public class HBinanceSpotRestClient {
     public Order queryOrder(Order order) {
         LinkedHashMap param = new LinkedHashMap();
         param.put(ConstantKey.SYMBOL, order.getSymbol());
-        if(order.getClientOrderId() != null) {
+        if (order.getClientOrderId() != null) {
             param.put("origClientOrderId", order.getClientOrderId());
         }
 
-        if(order.getOrderId() != null) {
+        if (order.getOrderId() != null) {
             param.put(ConstantKey.ORDER_ID, order.getOrderId());
         }
         String orderStr = trade.getOrder(param);
@@ -177,4 +182,8 @@ public class HBinanceSpotRestClient {
 
     }
 
+    public void setProxy(ProxyAuth myProxyAuth) {
+        spotClient.setProxy(myProxyAuth);
+
     }
+}

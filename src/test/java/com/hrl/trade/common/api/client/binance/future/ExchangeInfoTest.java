@@ -1,13 +1,7 @@
 package com.hrl.trade.common.api.client.binance.future;
 
-import com.binance.connector.futures.client.exceptions.BinanceClientException;
-import com.binance.connector.futures.client.exceptions.BinanceConnectorException;
-import com.hrl.trade.api.client.IMyFuturesClient;
-import com.hrl.trade.api.proxy.MyProxyAuth;
-import com.hrl.trade.config.PrivateConfig;
-import com.hrl.trade.platform.binance.client.future.BinanceUMFuturesClient;
+
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -17,7 +11,7 @@ import java.util.LinkedHashMap;
 public class ExchangeInfoTest {
 
 
-    @Test
+  /*  @Test
     public void test() {
         LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
 
@@ -39,5 +33,5 @@ public class ExchangeInfoTest {
             log.error("fullErrMessage: {} \nerrMessage: {} \nerrCode: {} \nHTTPStatusCode: {}",
                     e.getMessage(), e.getErrMsg(), e.getErrorCode(), e.getHttpStatusCode(), e);
         }
-    }
+    }*/
 }

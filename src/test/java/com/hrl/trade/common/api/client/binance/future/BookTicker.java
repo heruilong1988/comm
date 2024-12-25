@@ -2,8 +2,6 @@ package com.hrl.trade.common.api.client.binance.future;
 
 import com.binance.connector.futures.client.exceptions.BinanceClientException;
 import com.binance.connector.futures.client.exceptions.BinanceConnectorException;
-import com.hrl.trade.api.client.IMyFuturesClient;
-import com.hrl.trade.platform.binance.client.future.BinanceUMFuturesClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +13,7 @@ public final class BookTicker {
 
     private static final Logger logger = LoggerFactory.getLogger(BookTicker.class);
     public static void main(String[] args) {
-        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
+       /* LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
 
         IMyFuturesClient client = new BinanceUMFuturesClient();
 
@@ -25,10 +23,10 @@ public final class BookTicker {
         System.setProperty("https.proxyHost","localhost");
         System.setProperty("https.proxyPort","7890");
 
-        /*Proxy proxyConn = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1",  7890));
+        *//*Proxy proxyConn = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1",  7890));
         MyProxyAuth proxy = new MyProxyAuth(proxyConn, null);
 
-        client.setProxy(proxy);*/
+        client.setProxy(proxy);*//*
 
 
         try {
@@ -39,6 +37,6 @@ public final class BookTicker {
         } catch (BinanceClientException e) {
             logger.error("fullErrMessage: {} \nerrMessage: {} \nerrCode: {} \nHTTPStatusCode: {}",
                     e.getMessage(), e.getErrMsg(), e.getErrorCode(), e.getHttpStatusCode(), e);
-        }
+        }*/
     }
 }

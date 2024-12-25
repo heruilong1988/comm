@@ -80,13 +80,16 @@ public class HBinanceUmFutureClient implements HClient {
         parameters.put("type", order.getType());
 
         parameters.put("quantity", order.getOrigQty().doubleValue());
-        parameters.put("price", order.getPrice().doubleValue());
-
+        if(order.getPrice() != null) {
+            parameters.put("price", order.getPrice().doubleValue());
+        }
         if(order.getTimeInForce() != null) {
             parameters.put("timeInForce", order.getTimeInForce());
         }
 
         String result = account.newOrder(parameters);
+
+        log.info("newOrder result:{},order:{}", result,order);
 
         ObjectMapper objectMapper = Serialization.serializationInstance.getObjectMapper();
         Order rspOrder = null;
@@ -107,13 +110,17 @@ public class HBinanceUmFutureClient implements HClient {
         parameters.put("side", order.getSide());
         parameters.put("type", order.getType());
         parameters.put("quantity", order.getOrigQty().doubleValue());
-        parameters.put("price", order.getPrice().doubleValue());
 
+        if(order.getPrice() != null) {
+            parameters.put("price", order.getPrice().doubleValue());
+        }
         if(order.getTimeInForce() != null) {
             parameters.put("timeInForce", order.getTimeInForce());
         }
 
-        String result = account.newOrder(parameters);
+        String result = account.newTestOrder(parameters);
+
+        log.info("newTestOrder.order:{},result:{}", order, result);
 
         ObjectMapper objectMapper = Serialization.serializationInstance.getObjectMapper();
         Order rspOrder = null;
@@ -217,7 +224,7 @@ public class HBinanceUmFutureClient implements HClient {
 
     public AtomicReference<OrderBook> getOrderBook(Symbol symbol){
 
-       return this.hBinanceFutureStreamClient.getOrderBook(symbol.getPair());
+       return this.hBinanceFutureStreamClient.getOrderBook(symbol);
 
     }
 
