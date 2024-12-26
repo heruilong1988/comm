@@ -3,14 +3,20 @@ package com.hrl.trade.common.api.client.binance.future.um.stream;
 import com.binance.connector.futures.client.impl.UMFuturesClientImpl;
 import com.binance.connector.futures.client.impl.UMWebsocketClientImpl;
 import com.binance.connector.futures.client.utils.WebSocketCallback;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hrl.trade.common.api.client.Platforms;
 import com.hrl.trade.common.api.client.HClient;
+import com.hrl.trade.common.api.client.binance.future.um.http.UserDataListenKey;
 import com.hrl.trade.common.api.client.binance.future.um.stream.orderbook.OrderBookMaintainer;
 import com.hrl.trade.common.domain.orderbook.OrderBook;
 import com.hrl.trade.common.domain.orderupdate.OrderUpdateEvent;
 import com.hrl.trade.common.domain.orderupdate.OrderUpdateEventListener;
 import com.hrl.trade.common.domain.symbol.Symbol;
+import com.hrl.trade.common.json.Serialization;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,12 +29,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 public class HBinanceFutureStreamClient {
+
     public HClient hClient;
     public UMFuturesClientImpl umFuturesClient;
     public UMWebsocketClientImpl umWebsocketClient;
     public String userDataListenKey;
     public OrderUpdateEventListener orderUpdateEventListener;
-    public String platform;
+    public String platform = Platforms.BINANCE_UM_FUTURE.name();
 
     public List<Symbol> diffDepthStreamSymbols = new ArrayList<>();
 
@@ -42,9 +49,19 @@ public class HBinanceFutureStreamClient {
 
         @Override
         public void onReceive(String data) {
-            StreamBinanceUmOrderUpdateEvent streamBinanceUmOrderUpdateEvent = StreamBinanceUmOrderUpdateEvent.fromJson(data);
-            OrderUpdateEvent orderUpdateEvent = streamBinanceUmOrderUpdateEvent.getPayload().toOrderUpdateEvent();
-            orderUpdateEventListener.listen(orderUpdateEvent);
+            log.info("userDataStreamCallback.onReceive: {}", data);
+
+            JSONObject object = new JSONObject(data);
+            String event = object.getString("e");
+            if(event.equalsIgnoreCase("ACCOUNT_UPDATE")){
+
+            }else if(event.equalsIgnoreCase("ORDER_TRADE_UPDATE")){
+                StreamBinanceUmOrderUpdateEvent streamBinanceUmOrderUpdateEvent = StreamBinanceUmOrderUpdateEvent.fromJson(data);
+                OrderUpdateEvent orderUpdateEvent = streamBinanceUmOrderUpdateEvent.getPayload().toOrderUpdateEvent();
+                orderUpdateEventListener.listen(orderUpdateEvent);
+            }
+
+
         }
     };
 
@@ -54,7 +71,7 @@ public class HBinanceFutureStreamClient {
     public WebSocketCallback onFailureCallbackUserDataStream = (data) -> {
         log.error("[Platform:{}] UserDataStream failure,data:{}", platform, data);
 
-        this.reinit();
+       // this.reinit();
 
         //System.exit(1);
     } ;
@@ -65,12 +82,15 @@ public class HBinanceFutureStreamClient {
         //reInitWebSocketStreamClientImpl();
     };
 
+    @SneakyThrows
     public int initUserDataStream(){
         /*listenKeyScheduled.scheduleAtFixedRate(this::extendUserDateListenKey,
                 30, 30, TimeUnit.MINUTES);*/
 
+        extendUserDateListenKey();
+
         userDataKeyScheduledExecutor.scheduleAtFixedRate(this::extendUserDateListenKey,
-                0, 30, TimeUnit.MINUTES);
+                30, 30, TimeUnit.MINUTES);
 
         log.info("begin userDataKeyScheduledExecutor");
 
@@ -88,8 +108,9 @@ public class HBinanceFutureStreamClient {
     public ScheduledExecutorService userDataKeyScheduledExecutor = Executors.newSingleThreadScheduledExecutor();
 
 
-    public void extendUserDateListenKey(){
-        String userDataListenKeyFromServer = this.umFuturesClient.userData().createListenKey();
+    @SneakyThrows
+    public void extendUserDateListenKey()   {
+        String userDataListenKeyFromServer = Serialization.serializationInstance.getObjectMapper().readValue(this.umFuturesClient.userData().createListenKey(), UserDataListenKey.class).getListenKey();
 
         log.info("userDataListenKey create.platform:{},userDataListenKeyFromServer:{}",platform, userDataListenKeyFromServer);
 
@@ -99,6 +120,7 @@ public class HBinanceFutureStreamClient {
                 log.error("userDataListenKey no same.platform:{}",platform);
             }
         } else {
+            log.info("set userDataListenKey:{}", userDataListenKeyFromServer);
             this.userDataListenKey = userDataListenKeyFromServer;
 
         }

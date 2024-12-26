@@ -5,12 +5,16 @@ import com.binance.connector.client.impl.WebSocketStreamClientImpl;
 import com.binance.connector.client.utils.websocketcallback.*;
 import com.hrl.trade.common.api.client.HClient;
 import com.hrl.trade.common.api.client.Platforms;
+import com.hrl.trade.common.api.client.binance.future.um.http.UserDataListenKey;
 import com.hrl.trade.common.api.client.binance.future.um.stream.StreamBinanceUmOrderUpdateEvent;
 import com.hrl.trade.common.api.client.binance.spot.stream.orderbook.BinanceSpotOrderBookMaintainer;
 import com.hrl.trade.common.domain.orderbook.OrderBook;
 import com.hrl.trade.common.domain.orderupdate.OrderUpdateEvent;
 import com.hrl.trade.common.domain.orderupdate.OrderUpdateEventListener;
+import com.hrl.trade.common.json.Serialization;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,9 +48,17 @@ public class HBinanceSpotStreamClient {
 
         @Override
         public void onMessage(String data) {
-            StreamBinanceUmOrderUpdateEvent streamBinanceUmOrderUpdateEvent = StreamBinanceUmOrderUpdateEvent.fromJson(data);
-            OrderUpdateEvent orderUpdateEvent = streamBinanceUmOrderUpdateEvent.getPayload().toOrderUpdateEvent();
-            orderUpdateEventListener.listen(orderUpdateEvent);
+
+            log.info("onMessage: {}" + data);
+
+            JSONObject eventData = new JSONObject(data);
+            String event = eventData.getString("event");
+            if(event.equalsIgnoreCase("executionReport")) {
+                BinanceSpotOrderUpdateEvent binanceSpotOrderUpdateEvent = BinanceSpotOrderUpdateEvent.fromJson(data);
+                OrderUpdateEvent orderUpdateEvent = binanceSpotOrderUpdateEvent.toOrderUpdateEvent();
+                orderUpdateEventListener.listen(orderUpdateEvent);
+            }
+
         }
     };
 
@@ -87,14 +99,19 @@ public class HBinanceSpotStreamClient {
     public ScheduledExecutorService userDataKeyScheduledExecutor = Executors.newSingleThreadScheduledExecutor();
 
 
+    @SneakyThrows
     public void extendUserDateListenKey(){
-        String userDataListenKeyFromServer = this.spotRestClient.createUserData().createListenKey();
+        //String userDataListenKeyFromServer = this.spotRestClient.createUserData().createListenKey();
+
+        String userDataListenKeyFromServer = Serialization.serializationInstance.getObjectMapper().readValue(this.spotRestClient.createUserData().createListenKey(), UserDataListenKey.class).getListenKey();
+
 
         if(this.userDataListenKey != null) {
             if(!this.userDataListenKey.equals(userDataListenKeyFromServer)){
                 log.error("userDataListenKey no same.platform:{}",platform);
             }
         } else {
+            log.info("set userDataListenKey={}", userDataListenKeyFromServer);
             this.userDataListenKey = userDataListenKeyFromServer;
 
         }
@@ -113,8 +130,7 @@ public class HBinanceSpotStreamClient {
     public WebSocketFailureCallback onFailureCallbackDiffDepthStream = (t, data) -> {
         log.error("[Platform:{}] diffDepthStream failure,data:{}", platform, data, t);
 
-        this.reinit();
-
+        //this.reinit();
         //System.exit(1);
     } ;
 
